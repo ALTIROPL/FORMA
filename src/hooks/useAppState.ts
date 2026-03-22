@@ -7,6 +7,13 @@ export interface UserProfile {
   currentWeek: number;
 }
 
+export interface CompletedExercise {
+  name: string;
+  goal: string;
+  completedSets: number;
+  totalSets: number;
+}
+
 export interface ActivityRecord {
   id: string;
   date: string;
@@ -15,6 +22,7 @@ export interface ActivityRecord {
   durationMinutes: number;
   stageId?: number;
   level?: number;
+  exercises?: CompletedExercise[];
 }
 
 export interface AppState {

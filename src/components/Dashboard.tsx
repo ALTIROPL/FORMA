@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { ArrowRight, Activity, Calendar, Zap, Plus, Play, X } from 'lucide-react';
 import { View } from '../App';
-import { AppState, ActivityRecord } from '../hooks/useAppState';
+import { AppState, ActivityRecord, CompletedExercise } from '../hooks/useAppState';
 import { stages } from '../data/program';
+import { WorkoutMode } from './WorkoutMode';
 
 interface DashboardProps {
   onNavigate: (view: View) => void;
@@ -23,17 +24,12 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
   const [customName, setCustomName] = useState('');
   const [customDuration, setCustomDuration] = useState('30');
 
-  const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
-
   const handleStartWorkout = () => {
-    setWorkoutStartTime(Date.now());
     setIsWorkoutActive(true);
   };
 
-  const handleFinishWorkout = () => {
-    if (!workoutStartTime || !currentPlan || !currentStage) return;
-    const durationMs = Date.now() - workoutStartTime;
-    const durationMinutes = Math.max(1, Math.round(durationMs / 60000));
+  const handleFinishWorkout = (durationMinutes: number, exercises?: CompletedExercise[]) => {
+    if (!currentPlan || !currentStage) return;
     
     appState.addActivity({
       date: new Date().toISOString(),
@@ -41,11 +37,11 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
       name: `Etap ${currentStage.id}: Poziom ${currentPlan.level}`,
       durationMinutes,
       stageId: currentStage.id,
-      level: currentPlan.level
+      level: currentPlan.level,
+      exercises
     });
     
     setIsWorkoutActive(false);
-    setWorkoutStartTime(null);
     alert(`Trening zakończony! Czas: ${durationMinutes} min.`);
   };
 
@@ -67,45 +63,12 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
 
   if (isWorkoutActive && currentPlan && currentStage) {
     return (
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="bg-zinc-900 rounded-2xl p-8 border border-emerald-500/30 text-center space-y-6">
-          <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto animate-pulse">
-            <Activity size={40} className="text-emerald-500" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Trening w toku</h2>
-            <p className="text-emerald-500 font-medium">Etap {currentStage.id} • Poziom {currentPlan.level}</p>
-          </div>
-          
-          <div className="text-left bg-zinc-950 rounded-xl p-4 border border-white/5 max-h-64 overflow-y-auto">
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-3">Lista ćwiczeń</h3>
-            <ul className="space-y-3">
-              {currentPlan.exercises.map((ex, i) => (
-                <li key={i} className="flex items-start">
-                  <span className="text-emerald-500 font-mono text-xs mr-2 mt-0.5">{ex.id}.</span>
-                  <div>
-                    <p className="text-white text-sm">{ex.name}</p>
-                    <p className="text-zinc-500 text-xs">{ex.sets} serie × {ex.reps} | Przerwa: {ex.rest}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <button
-            onClick={handleFinishWorkout}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-6 py-4 transition-colors text-lg"
-          >
-            Zakończ Trening
-          </button>
-          <button
-            onClick={() => setIsWorkoutActive(false)}
-            className="text-zinc-500 hover:text-white text-sm"
-          >
-            Anuluj
-          </button>
-        </div>
-      </div>
+      <WorkoutMode
+        plan={currentPlan}
+        stage={currentStage}
+        onFinish={handleFinishWorkout}
+        onCancel={() => setIsWorkoutActive(false)}
+      />
     );
   }
 
@@ -161,19 +124,14 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
           </p>
 
           <div className="space-y-3 mb-6">
-            {currentPlan?.exercises.slice(0, 3).map((ex, i) => (
+            {currentPlan?.exercises.map((ex, i) => (
               <div key={i} className="flex items-center text-sm">
                 <div className="w-6 h-6 rounded border border-white/10 flex items-center justify-center text-emerald-500 font-mono text-xs mr-3 shrink-0 bg-zinc-950">
                   {i + 1}
                 </div>
-                <span className="text-zinc-200 font-medium truncate">{ex.name}</span>
+                <span className="text-zinc-200 font-medium">{ex.name}</span>
               </div>
             ))}
-            {currentPlan && currentPlan.exercises.length > 3 && (
-              <div className="text-xs text-zinc-500 pl-9">
-                + {currentPlan.exercises.length - 3} zobacz pozostałe...
-              </div>
-            )}
           </div>
 
           <button

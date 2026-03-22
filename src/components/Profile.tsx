@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
-import { User, Download, Upload, Trash2, Plus, Minus } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { User, Download, Upload, Trash2, Plus, Minus, Activity, X } from 'lucide-react';
 import { stages } from '../data/program';
 import { AppState, UserProfile } from '../hooks/useAppState';
+import { FitnessTest } from './FitnessTest';
+import { View } from '../App';
 
 interface ProfileProps {
   appState: {
@@ -10,11 +12,13 @@ interface ProfileProps {
     importData: (data: AppState) => void;
     resetData: () => void;
   };
+  onNavigate: (view: View) => void;
 }
 
-export function Profile({ appState }: ProfileProps) {
+export function Profile({ appState, onNavigate }: ProfileProps) {
   const { state, updateProfile, importData, resetData } = appState;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isTestOpen, setIsTestOpen] = useState(false);
 
   const handleExport = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
@@ -104,7 +108,7 @@ export function Profile({ appState }: ProfileProps) {
               {[1, 2, 3].map(level => (
                 <button
                   key={level}
-                  onClick={() => updateProfile({ currentLevel: level })}
+                  onClick={() => updateProfile({ currentLevel: level as 1|2|3 })}
                   className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${
                     state.profile.currentLevel === level
                       ? 'bg-zinc-800 text-emerald-500'
@@ -147,6 +151,37 @@ export function Profile({ appState }: ProfileProps) {
           </div>
         </div>
       </div>
+
+      <div className="space-y-4">
+        <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Test Sprawności</h2>
+        <button
+          onClick={() => setIsTestOpen(true)}
+          className="w-full bg-zinc-900 rounded-2xl p-4 border border-white/5 hover:bg-zinc-800 transition-colors flex items-center justify-between group"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500/10 transition-colors">
+              <Activity size={24} />
+            </div>
+            <div className="text-left">
+              <h4 className="font-bold text-white">Wykonaj Test Sprawności</h4>
+              <p className="text-xs text-zinc-500">Sprawdź swój poziom i dobierz plan</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {isTestOpen && (
+        <div className="fixed inset-0 bg-zinc-950 z-50 overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
+          <div className="sticky top-0 bg-zinc-950/80 backdrop-blur-md p-4 flex justify-end border-b border-white/10 z-10">
+            <button onClick={() => setIsTestOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="p-4 md:p-8 max-w-4xl mx-auto">
+            <FitnessTest onNavigate={(view) => { setIsTestOpen(false); onNavigate(view); }} />
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Dane i Pamięć</h2>

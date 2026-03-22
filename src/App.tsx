@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Activity, BookOpen, ClipboardList, Home, Menu, X, User, History } from 'lucide-react';
+import { BookOpen, ClipboardList, Home, Menu, X, User, History } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
-import { FitnessTest } from './components/FitnessTest';
 import { StageList } from './components/StageList';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { Profile } from './components/Profile';
 import { HistoryView } from './components/HistoryView';
 import { useAppState } from './hooks/useAppState';
 
-export type View = 'dashboard' | 'history' | 'test' | 'stages' | 'knowledge' | 'profile';
+export type View = 'dashboard' | 'history' | 'stages' | 'knowledge' | 'profile';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -18,7 +17,6 @@ export default function App() {
   const navItems = [
     { id: 'dashboard', label: 'Start', icon: Home },
     { id: 'history', label: 'Historia', icon: History },
-    { id: 'test', label: 'Test Sprawności', icon: Activity },
     { id: 'stages', label: 'Plany Treningowe', icon: ClipboardList },
     { id: 'knowledge', label: 'Baza Wiedzy', icon: BookOpen },
     { id: 'profile', label: 'Profil', icon: User },
@@ -30,14 +28,12 @@ export default function App() {
         return <Dashboard onNavigate={setCurrentView} appState={appState} />;
       case 'history':
         return <HistoryView appState={appState} />;
-      case 'test':
-        return <FitnessTest onNavigate={setCurrentView} />;
       case 'stages':
         return <StageList />;
       case 'knowledge':
         return <KnowledgeBase />;
       case 'profile':
-        return <Profile appState={appState} />;
+        return <Profile appState={appState} onNavigate={setCurrentView} />;
       default:
         return <Dashboard onNavigate={setCurrentView} appState={appState} />;
     }
