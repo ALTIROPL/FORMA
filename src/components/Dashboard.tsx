@@ -4,12 +4,14 @@ import { View } from '../App';
 import { AppState, ActivityRecord, CompletedExercise } from '../hooks/useAppState';
 import { stages } from '../data/program';
 import { WorkoutMode } from './WorkoutMode';
+import { CalendarWidget } from './CalendarWidget';
 
 interface DashboardProps {
   onNavigate: (view: View) => void;
   appState: {
     state: AppState;
     addActivity: (activity: Omit<ActivityRecord, 'id'>) => void;
+    updateProfile: (updates: Partial<AppState['profile']>) => void;
   };
 }
 
@@ -20,9 +22,12 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
 
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [isFinishWeekOpen, setIsFinishWeekOpen] = useState(false);
+  const [postWorkoutData, setPostWorkoutData] = useState<{duration: number, exercises?: CompletedExercise[]} | null>(null);
   
   const [customName, setCustomName] = useState('');
   const [customDuration, setCustomDuration] = useState('30');
+  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
   const handleStartWorkout = () => {
     setIsWorkoutActive(true);
@@ -42,15 +47,20 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
     });
     
     setIsWorkoutActive(false);
-    alert(`Trening zakończony! Czas: ${durationMinutes} min.`);
+    setPostWorkoutData({ duration: durationMinutes, exercises });
   };
 
   const handleAddCustomActivity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customName.trim()) return;
     
+    // Create date with current time to ensure proper sorting
+    const now = new Date();
+    const [year, month, day] = customDate.split('-');
+    const activityDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), now.getHours(), now.getMinutes(), now.getSeconds());
+    
     appState.addActivity({
-      date: new Date().toISOString(),
+      date: activityDate.toISOString(),
       type: 'custom',
       name: customName,
       durationMinutes: parseInt(customDuration) || 30,
@@ -59,6 +69,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
     setIsAddActivityOpen(false);
     setCustomName('');
     setCustomDuration('30');
+    setCustomDate(new Date().toISOString().split('T')[0]);
   };
 
   if (isWorkoutActive && currentPlan && currentStage) {
@@ -94,15 +105,23 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
             Etap {profile.currentStageId}
           </div>
         </div>
-        <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 border border-white/5 relative overflow-hidden">
-          <Calendar size={100} className="absolute -right-4 -top-4 text-white/5" />
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Tydzień {profile.currentWeek}</h3>
-          <div className="text-lg md:text-xl font-bold text-emerald-500 mb-2 leading-tight">
-            BUDOWANIE FORMY
+        <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 border border-white/5 relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <Calendar size={100} className="absolute -right-4 -top-4 text-white/5" />
+            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Tydzień {profile.currentWeek}</h3>
+            <div className="text-lg md:text-xl font-bold text-emerald-500 mb-2 leading-tight">
+              BUDOWANIE FORMY
+            </div>
+            <div className="text-zinc-400 text-sm">
+              Cykl {Math.ceil(profile.currentWeek / 4)}
+            </div>
           </div>
-          <div className="text-zinc-400 text-sm">
-            Cykl 1
-          </div>
+          <button
+            onClick={() => setIsFinishWeekOpen(true)}
+            className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold py-2 rounded-lg transition-colors z-10 relative"
+          >
+            ZAKOŃCZ TYDZIEŃ
+          </button>
         </div>
       </div>
 
@@ -189,6 +208,12 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  Data
+                </label>
+                <CalendarWidget selectedDate={customDate} onSelectDate={setCustomDate} />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">
                   Czas trwania (minuty)
                 </label>
@@ -209,6 +234,160 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                 Zapisz aktywność
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Post Workout Modal */}
+      {postWorkoutData && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center border-b border-white/5">
+              <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap size={32} />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Świetna robota!</h3>
+              <p className="text-zinc-400">
+                Trening ukończony w {postWorkoutData.duration} minut. Jak oceniasz dzisiejszy wysiłek?
+              </p>
+            </div>
+            
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => {
+                  if (profile.currentLevel < 3) {
+                    appState.updateProfile({ currentLevel: profile.currentLevel + 1 });
+                  } else if (profile.currentStageId < stages.length) {
+                    appState.updateProfile({ currentStageId: profile.currentStageId + 1, currentLevel: 1 });
+                  }
+                  setPostWorkoutData(null);
+                }}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
+              >
+                <span className="font-bold text-emerald-500">Zbyt łatwy</span>
+                <span className="text-xs text-zinc-400 mt-1">Zwiększ poziom trudności na kolejny trening</span>
+              </button>
+              
+              <button
+                onClick={() => setPostWorkoutData(null)}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-4 py-4 transition-colors"
+              >
+                Odpowiedni (Zostaw bez zmian)
+              </button>
+              
+              <button
+                onClick={() => {
+                  if (profile.currentLevel > 1) {
+                    appState.updateProfile({ currentLevel: profile.currentLevel - 1 });
+                  }
+                  setPostWorkoutData(null);
+                }}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
+              >
+                <span className="font-bold text-red-500">Zbyt trudny</span>
+                <span className="text-xs text-zinc-400 mt-1">Zmniejsz poziom trudności na kolejny trening</span>
+              </button>
+            </div>
+
+            <div className="px-6 pb-2">
+              <div className="p-4 bg-zinc-950 rounded-xl border border-white/5 text-sm text-zinc-400">
+                <span className="text-emerald-500 font-bold">Wskazówka:</span> Jeśli trenujesz na tym poziomie już 2-3 tygodnie, rozważ zwiększenie poziomu lub przejście do kolejnego etapu.
+              </div>
+            </div>
+
+            {profile.currentWeek >= 4 && profile.currentWeek % 4 === 0 && (
+              <div className="px-6 pb-2">
+                <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                  <h4 className="font-bold text-blue-400 mb-2 flex items-center">
+                    <Activity size={18} className="mr-2" />
+                    Czas na DELOAD?
+                  </h4>
+                  <p className="text-sm text-blue-200/70">
+                    Trenujesz już {profile.currentWeek} tydzień. Zgodnie z bazą wiedzy, zalecamy wykonanie tygodnia DELOAD (zmniejszenie objętości o 50% lub lżejsze treningi), aby organizm mógł się zregenerować przed kolejnym blokiem.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="p-4 border-t border-white/5">
+              <button
+                onClick={() => setPostWorkoutData(null)}
+                className="w-full text-zinc-500 hover:text-white text-sm font-medium transition-colors"
+              >
+                Pomiń
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isFinishWeekOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-2xl w-full max-w-md border border-white/10 overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar size={32} className="text-emerald-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Tydzień {profile.currentWeek} zakończony!
+              </h2>
+              <p className="text-zinc-400 mb-6">
+                Gratulacje! Zakończyłeś kolejny tydzień treningów.
+              </p>
+
+              {profile.currentWeek % 4 === 3 && (
+                <div className="mb-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 text-left">
+                  <h4 className="font-bold text-blue-400 mb-2 flex items-center">
+                    <Activity size={18} className="mr-2" />
+                    Zbliża się DELOAD
+                  </h4>
+                  <p className="text-sm text-blue-200/70">
+                    Kolejny tydzień to Twój 4. tydzień w tym bloku. Zgodnie z bazą wiedzy, zalecamy wykonanie tygodnia DELOAD (zmniejszenie objętości o 50% lub lżejsze treningi), aby organizm mógł się zregenerować.
+                  </p>
+                </div>
+              )}
+
+              {profile.currentWeek % 4 === 0 && (
+                <div className="mb-6 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-left">
+                  <h4 className="font-bold text-emerald-500 mb-2 flex items-center">
+                    <Zap size={18} className="mr-2" />
+                    Nowy Cykl Treningowy
+                  </h4>
+                  <p className="text-sm text-emerald-200/70">
+                    Zakończyłeś tydzień DELOAD. Czas rozpocząć nowy cykl! Możesz teraz zwiększyć poziom trudności lub przejść do kolejnego etapu.
+                  </p>
+                </div>
+              )}
+
+              {(profile.currentWeek % 4 === 1 || profile.currentWeek % 4 === 2) && (
+                <div className="mb-6 p-4 bg-zinc-950 rounded-xl border border-white/5 text-left">
+                  <h4 className="font-bold text-emerald-500 mb-2 flex items-center">
+                    <Zap size={18} className="mr-2" />
+                    Czas na progres?
+                  </h4>
+                  <p className="text-sm text-zinc-400">
+                    Zakończyłeś {profile.currentWeek % 4 === 1 ? '1.' : '2.'} tydzień w tym cyklu. Jeśli czujesz, że treningi są zbyt łatwe, rozważ zwiększenie poziomu trudności w kolejnym tygodniu.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setIsFinishWeekOpen(false)}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={() => {
+                    appState.updateProfile({ currentWeek: profile.currentWeek + 1 });
+                    setIsFinishWeekOpen(false);
+                  }}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold py-3 rounded-xl transition-colors"
+                >
+                  Rozpocznij Tydzień {profile.currentWeek + 1}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
