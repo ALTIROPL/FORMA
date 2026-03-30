@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Activity, Calendar, Zap, Plus, Play, X } from 'lucide-react';
 import { View } from '../App';
 import { AppState, ActivityRecord, CompletedExercise } from '../hooks/useAppState';
-import { stages } from '../data/program';
+import { stages, specialPlans } from '../data/program';
 import { WorkoutMode } from './WorkoutMode';
 import { CalendarWidget } from './CalendarWidget';
 
@@ -21,33 +21,35 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
   const currentPlan = currentStage?.plans.find(p => p.level === profile.currentLevel);
 
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [activeWorkoutPlan, setActiveWorkoutPlan] = useState<{plan: Plan, stage: Stage} | null>(null);
   const [isFinishWeekOpen, setIsFinishWeekOpen] = useState(false);
-  const [postWorkoutData, setPostWorkoutData] = useState<{duration: number, exercises?: CompletedExercise[]} | null>(null);
+  const [postWorkoutData, setPostWorkoutData] = useState<{duration: number, exercises?: CompletedExercise[], planLevel: number, stageId: number} | null>(null);
   
   const [customName, setCustomName] = useState('');
   const [customDuration, setCustomDuration] = useState('30');
   const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const handleStartWorkout = () => {
-    setIsWorkoutActive(true);
+  const handleStartWorkout = (plan: Plan, stage: Stage) => {
+    setActiveWorkoutPlan({ plan, stage });
   };
 
   const handleFinishWorkout = (durationMinutes: number, exercises?: CompletedExercise[]) => {
-    if (!currentPlan || !currentStage) return;
+    if (!activeWorkoutPlan) return;
+    
+    const { plan, stage } = activeWorkoutPlan;
     
     appState.addActivity({
       date: new Date().toISOString(),
       type: 'plan',
-      name: `Etap ${currentStage.id}: Poziom ${currentPlan.level}`,
+      name: stage.id === 0 ? plan.type : `Etap ${stage.id}: Poziom ${plan.level}`,
       durationMinutes,
-      stageId: currentStage.id,
-      level: currentPlan.level,
+      stageId: stage.id,
+      level: plan.level,
       exercises
     });
     
-    setIsWorkoutActive(false);
-    setPostWorkoutData({ duration: durationMinutes, exercises });
+    setActiveWorkoutPlan(null);
+    setPostWorkoutData({ duration: durationMinutes, exercises, planLevel: plan.level, stageId: stage.id });
   };
 
   const handleAddCustomActivity = (e: React.FormEvent) => {
@@ -72,13 +74,13 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
     setCustomDate(new Date().toISOString().split('T')[0]);
   };
 
-  if (isWorkoutActive && currentPlan && currentStage) {
+  if (activeWorkoutPlan) {
     return (
       <WorkoutMode
-        plan={currentPlan}
-        stage={currentStage}
+        plan={activeWorkoutPlan.plan}
+        stage={activeWorkoutPlan.stage}
         onFinish={handleFinishWorkout}
-        onCancel={() => setIsWorkoutActive(false)}
+        onCancel={() => setActiveWorkoutPlan(null)}
       />
     );
   }
@@ -98,7 +100,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
           <Zap size={100} className="absolute -right-4 -top-4 text-white/5" />
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Aktualny Etap</h3>
           <div className="text-lg md:text-xl font-bold text-white mb-2 leading-tight">
-            {currentStage?.title.split(':')[0] || 'Wprowadzenie i Fundamenty'}
+            Poziom {profile.currentLevel}
           </div>
           <div className="flex items-center text-emerald-500 text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
@@ -108,12 +110,12 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
         <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 border border-white/5 relative overflow-hidden flex flex-col justify-between">
           <div>
             <Calendar size={100} className="absolute -right-4 -top-4 text-white/5" />
-            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Tydzień {profile.currentWeek}</h3>
+            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${profile.currentWeek % 4 === 0 ? 'text-blue-500' : 'text-zinc-500'}`}>Tydzień {profile.currentWeek} {profile.currentWeek % 4 === 0 && '(Deload)'}</h3>
             <div className="text-lg md:text-xl font-bold text-emerald-500 mb-2 leading-tight">
               BUDOWANIE FORMY
             </div>
             <div className="text-zinc-400 text-sm">
-              Cykl {Math.ceil(profile.currentWeek / 4)}
+              Etap {Math.ceil(profile.currentWeek / 4)}
             </div>
           </div>
           <button
@@ -154,11 +156,35 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
           </div>
 
           <button
-            onClick={handleStartWorkout}
+            onClick={() => {
+              if (currentPlan && currentStage) {
+                handleStartWorkout(currentPlan, currentStage);
+              }
+            }}
             className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-4 py-4 transition-colors flex items-center justify-center"
           >
             <Play size={20} className="mr-2 fill-current" /> ROZPOCZNIJ TRENING
           </button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-white">Plany Specjalne</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {specialPlans.map((plan) => (
+            <div key={plan.id} className="bg-zinc-900 rounded-2xl p-6 border border-white/5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">{plan.type}</h3>
+                <p className="text-zinc-400 text-sm mb-4">{plan.schedule}</p>
+              </div>
+              <button
+                onClick={() => handleStartWorkout(plan, { id: 0, title: 'Plany Specjalne', goal: 'Trening w każdej sytuacji', duration: 'Zależnie od potrzeb', plans: specialPlans })}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl px-4 py-3 transition-colors flex items-center justify-center"
+              >
+                <Play size={16} className="mr-2 fill-current" /> ROZPOCZNIJ
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -185,7 +211,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
 
       {/* Add Activity Modal */}
       {isAddActivityOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
           <div className="bg-zinc-900 rounded-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-white/5">
               <h3 className="font-bold text-white">Dodaj własną aktywność</h3>
@@ -240,7 +266,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
 
       {/* Post Workout Modal */}
       {postWorkoutData && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
           <div className="bg-zinc-900 rounded-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 text-center border-b border-white/5">
               <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -328,7 +354,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                 <Calendar size={32} className="text-emerald-500" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Tydzień {profile.currentWeek} zakończony!
+                Tydzień {profile.currentWeek} {profile.currentWeek % 4 === 0 && '(Deload)'} zakończony!
               </h2>
               <p className="text-zinc-400 mb-6">
                 Gratulacje! Zakończyłeś kolejny tydzień treningów.
@@ -350,10 +376,10 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                 <div className="mb-6 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-left">
                   <h4 className="font-bold text-emerald-500 mb-2 flex items-center">
                     <Zap size={18} className="mr-2" />
-                    Nowy Cykl Treningowy
+                    Nowy Etap Treningowy
                   </h4>
                   <p className="text-sm text-emerald-200/70">
-                    Zakończyłeś tydzień DELOAD. Czas rozpocząć nowy cykl! Możesz teraz zwiększyć poziom trudności lub przejść do kolejnego etapu.
+                    Zakończyłeś tydzień DELOAD. Czas rozpocząć nowy etap! Możesz teraz zwiększyć poziom trudności lub przejść do kolejnego etapu.
                   </p>
                 </div>
               )}
@@ -365,7 +391,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                     Czas na progres?
                   </h4>
                   <p className="text-sm text-zinc-400">
-                    Zakończyłeś {profile.currentWeek % 4 === 1 ? '1.' : '2.'} tydzień w tym cyklu. Jeśli czujesz, że treningi są zbyt łatwe, rozważ zwiększenie poziomu trudności w kolejnym tygodniu.
+                    Zakończyłeś {profile.currentWeek % 4 === 1 ? '1.' : '2.'} tydzień w tym etapie. Jeśli czujesz, że treningi są zbyt łatwe, rozważ zwiększenie poziomu trudności w kolejnym tygodniu.
                   </p>
                 </div>
               )}
@@ -384,7 +410,7 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
                   }}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold py-3 rounded-xl transition-colors"
                 >
-                  Rozpocznij Tydzień {profile.currentWeek + 1}
+                  Rozpocznij Tydzień {profile.currentWeek + 1} {(profile.currentWeek + 1) % 4 === 0 && '(Deload)'}
                 </button>
               </div>
             </div>

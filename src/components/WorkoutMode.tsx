@@ -84,7 +84,7 @@ export function WorkoutMode({ plan, stage, onFinish, onCancel }: WorkoutModeProp
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 bg-zinc-950 z-[60] flex flex-col animate-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-white/10 bg-zinc-900">
         <button onClick={onCancel} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors">

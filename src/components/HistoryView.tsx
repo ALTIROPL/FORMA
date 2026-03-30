@@ -124,7 +124,7 @@ export function HistoryView({ appState }: HistoryViewProps) {
 
       {/* Activity Details Modal */}
       {selectedActivity && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
           <div className="bg-zinc-900 rounded-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
             <div className="flex items-center justify-between p-4 border-b border-white/5 shrink-0">
               <div>
@@ -200,7 +200,7 @@ export function HistoryView({ appState }: HistoryViewProps) {
 
       {/* Manual Log Modal */}
       {isManualLogOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
           <div className="bg-zinc-900 rounded-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-white/5">
               <h3 className="font-bold text-white">Dodaj trening z programu</h3>

@@ -95,7 +95,7 @@ export function Profile({ appState, onNavigate }: ProfileProps) {
               className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors appearance-none"
             >
               {stages.map(s => (
-                <option key={s.id} value={s.id}>Etap {s.id}: {s.title}</option>
+                <option key={s.id} value={s.id}>{s.title}</option>
               ))}
             </select>
           </div>
@@ -138,8 +138,12 @@ export function Profile({ appState, onNavigate }: ProfileProps) {
                 <Minus size={20} />
               </button>
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">{state.profile.currentWeek}</div>
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Tydzień</div>
+                <div className={`text-2xl font-bold ${state.profile.currentWeek % 4 === 0 ? 'text-blue-500' : 'text-white'}`}>
+                  {state.profile.currentWeek}
+                </div>
+                <div className={`text-[10px] font-bold uppercase tracking-wider ${state.profile.currentWeek % 4 === 0 ? 'text-blue-500' : 'text-zinc-500'}`}>
+                  Tydzień {state.profile.currentWeek % 4 === 0 && '(Deload)'}
+                </div>
               </div>
               <button
                 onClick={() => updateProfile({ currentWeek: state.profile.currentWeek + 1 })}
@@ -171,7 +175,7 @@ export function Profile({ appState, onNavigate }: ProfileProps) {
       </div>
 
       {isTestOpen && (
-        <div className="fixed inset-0 bg-zinc-950 z-50 overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed inset-0 bg-zinc-950 z-[60] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
           <div className="sticky top-0 bg-zinc-950/80 backdrop-blur-md p-4 flex justify-end border-b border-white/10 z-10">
             <button onClick={() => setIsTestOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
               <X size={20} />

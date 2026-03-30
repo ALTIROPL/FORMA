@@ -46,11 +46,11 @@ export function PlanView({ plan, stage, onBack }: PlanViewProps) {
       <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 md:p-6 flex items-start space-x-4">
         <Info size={24} className="text-emerald-500 shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-emerald-500 font-bold mb-1">Typ treningu: {plan.type}</h3>
+          <h3 className="text-emerald-500 font-bold mb-1">Założenia treningowe:</h3>
           <p className="text-zinc-300 text-sm leading-relaxed">
-            {plan.type === 'Klasyczny' && 'Wykonujesz ćwiczenia po kolei jedno po drugim. Zrób wszystkie serie pierwszego ćwiczenia z przerwami, a dopiero potem przejdź do następnego.'}
-            {plan.type === 'Obwodowy' && 'Wykonujesz ćwiczenie jedno po drugim od razu. Między ćwiczeniami zrób sobie 15-30 sec przerwy (jeśli to za mało, to 30-45 sec). Po całym obwodzie odpocznij dłużej i powtórz.'}
-            {plan.type === 'Serie łączone' && 'Robisz dwa ćwiczenia po sobie, bez przerwy (np. 1 i 1a). Kiedy skończysz wszystkie zaplanowane serie tej pary ćwiczeń — dopiero wtedy przechodzisz do następnej pary.'}
+            {plan.type.includes('awaryjny') && 'Wykonuj ćwiczenia po kolei. Staraj się utrzymać tempo.'}
+            {plan.type.includes('wyjazdowy') && 'Wykonuj 3-4 rundy. Jedna runda to wykonanie wszystkich ćwiczeń jedno po drugim. Pracujesz nie na liczbę powtórzeń, ale na liczbę sekund: 45 sekund pracy w danym ćwiczeniu. Po zakończeniu robisz kolejne. Przerwy między ćwiczeniami: 15 sekund. Główna przerwa: 60 sekund po każdej rundzie.'}
+            {!plan.type.includes('awaryjny') && !plan.type.includes('wyjazdowy') && 'Zacznij od ćwiczenia numer 1 i przejdź do kolejnego, gdy zrobisz pełną liczbę serii.'}
           </p>
         </div>
       </div>

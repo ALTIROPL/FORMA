@@ -87,7 +87,7 @@ export default function App() {
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 lg:pb-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-32 lg:pb-8">
           <div className="max-w-4xl mx-auto">
             {renderView()}
           </div>

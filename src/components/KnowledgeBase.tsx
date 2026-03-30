@@ -103,7 +103,7 @@ export function KnowledgeBase() {
           </div>
           <div className="space-y-4 text-zinc-300 text-sm leading-relaxed">
             <p>
-              To system treningowy, który łączy intensywny rozwój z pełną regeneracją. Każdy cykl to 4-5 tygodni pracy i 1 tydzień deloadu (czyli strategicznego odciążenia).
+              To system treningowy, który łączy intensywny rozwój z pełną regeneracją. Każdy etap to 4-5 tygodni pracy i 1 tydzień deloadu (czyli strategicznego odciążenia).
             </p>
             <div className="bg-zinc-950 p-4 rounded-xl border border-white/5">
               <ul className="space-y-3">
