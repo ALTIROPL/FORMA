@@ -24,7 +24,7 @@ export function StageList() {
           Plany Treningowe
         </h1>
         <p className="text-zinc-400 text-lg max-w-2xl">
-          Wybierz etap dopasowany do Twojego poziomu. Każdy etap zawiera 3 plany treningowe o rosnącym stopniu trudności.
+          Wybierz etap dopasowany do Twojego poziomu. Każdy etap zawiera plany treningowe o rosnącym stopniu trudności.
         </p>
       </header>
 

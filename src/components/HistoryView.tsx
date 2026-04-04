@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Clock, Calendar as CalendarIcon, History, Activity, X, ChevronRight, CheckCircle2, Plus } from 'lucide-react';
 import { AppState, ActivityRecord } from '../hooks/useAppState';
 import { stages } from '../data/program';

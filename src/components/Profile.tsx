@@ -105,7 +105,7 @@ export function Profile({ appState, onNavigate }: ProfileProps) {
               Poziom Planu
             </label>
             <div className="flex bg-zinc-950 rounded-xl p-1 border border-white/10">
-              {[1, 2, 3].map(level => (
+              {stages.find(s => s.id === state.profile.currentStageId)?.plans.map(p => p.level).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b).map(level => (
                 <button
                   key={level}
                   onClick={() => updateProfile({ currentLevel: level as 1|2|3 })}

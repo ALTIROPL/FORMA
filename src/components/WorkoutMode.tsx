@@ -98,8 +98,8 @@ export function WorkoutMode({ plan, stage, onFinish, onCancel }: WorkoutModeProp
       <div className="p-4 bg-zinc-900 border-b border-white/5">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xl font-bold text-white">Dzień {new Date().getDay() || 7}: Siła</h3>
-            <p className="text-xs text-zinc-400 uppercase tracking-wider mt-1">PLAN: {plan.type}</p>
+            <h3 className="text-xl font-bold text-white">Etap {stage.id}: Poziom {plan.level}</h3>
+            <p className="text-xs text-zinc-400 uppercase tracking-wider mt-1">{plan.type}</p>
           </div>
           <div className="flex items-center text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg font-mono font-bold">
             <Clock size={16} className="mr-2" />

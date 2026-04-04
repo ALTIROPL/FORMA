@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Activity, Calendar, Zap, Plus, Play, X } from 'lucide-react';
 import { View } from '../App';
 import { AppState, ActivityRecord, CompletedExercise } from '../hooks/useAppState';
-import { stages, specialPlans } from '../data/program';
+import { stages, specialPlans, Plan, Stage } from '../data/program';
 import { WorkoutMode } from './WorkoutMode';
 import { CalendarWidget } from './CalendarWidget';
 
@@ -100,11 +100,11 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
           <Zap size={100} className="absolute -right-4 -top-4 text-white/5" />
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Aktualny Etap</h3>
           <div className="text-lg md:text-xl font-bold text-white mb-2 leading-tight">
-            Poziom {profile.currentLevel}
+            Etap {profile.currentStageId}: Poziom {profile.currentLevel}
           </div>
           <div className="flex items-center text-emerald-500 text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
-            Etap {profile.currentStageId}
+            ({currentPlan?.type})
           </div>
         </div>
         <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 border border-white/5 relative overflow-hidden flex flex-col justify-between">
@@ -279,40 +279,52 @@ export function Dashboard({ onNavigate, appState }: DashboardProps) {
             </div>
             
             <div className="p-6 space-y-3">
-              <button
-                onClick={() => {
-                  if (profile.currentLevel < 3) {
-                    appState.updateProfile({ currentLevel: profile.currentLevel + 1 });
-                  } else if (profile.currentStageId < stages.length) {
-                    appState.updateProfile({ currentStageId: profile.currentStageId + 1, currentLevel: 1 });
-                  }
-                  setPostWorkoutData(null);
-                }}
-                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
-              >
-                <span className="font-bold text-emerald-500">Zbyt łatwy</span>
-                <span className="text-xs text-zinc-400 mt-1">Zwiększ poziom trudności na kolejny trening</span>
-              </button>
-              
-              <button
-                onClick={() => setPostWorkoutData(null)}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-4 py-4 transition-colors"
-              >
-                Odpowiedni (Zostaw bez zmian)
-              </button>
-              
-              <button
-                onClick={() => {
-                  if (profile.currentLevel > 1) {
-                    appState.updateProfile({ currentLevel: profile.currentLevel - 1 });
-                  }
-                  setPostWorkoutData(null);
-                }}
-                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
-              >
-                <span className="font-bold text-red-500">Zbyt trudny</span>
-                <span className="text-xs text-zinc-400 mt-1">Zmniejsz poziom trudności na kolejny trening</span>
-              </button>
+              {postWorkoutData.stageId !== 0 ? (
+                <>
+                  <button
+                    onClick={() => {
+                      const maxLevel = currentStage?.plans.reduce((max, p) => Math.max(max, p.level), 0) || 1;
+                      if (profile.currentLevel < maxLevel) {
+                        appState.updateProfile({ currentLevel: profile.currentLevel + 1 });
+                      } else if (profile.currentStageId < stages.length) {
+                        appState.updateProfile({ currentStageId: profile.currentStageId + 1, currentLevel: 1 });
+                      }
+                      setPostWorkoutData(null);
+                    }}
+                    className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
+                  >
+                    <span className="font-bold text-emerald-500">Zbyt łatwy</span>
+                    <span className="text-xs text-zinc-400 mt-1">Zwiększ poziom trudności na kolejny trening</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setPostWorkoutData(null)}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-4 py-4 transition-colors"
+                  >
+                    Odpowiedni (Zostaw bez zmian)
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      if (profile.currentLevel > 1) {
+                        appState.updateProfile({ currentLevel: profile.currentLevel - 1 });
+                      }
+                      setPostWorkoutData(null);
+                    }}
+                    className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl px-4 py-4 transition-colors flex flex-col items-center"
+                  >
+                    <span className="font-bold text-red-500">Zbyt trudny</span>
+                    <span className="text-xs text-zinc-400 mt-1">Zmniejsz poziom trudności na kolejny trening</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setPostWorkoutData(null)}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl px-4 py-4 transition-colors"
+                >
+                  Zamknij
+                </button>
+              )}
             </div>
 
             <div className="px-6 pb-2">
